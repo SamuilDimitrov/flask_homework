@@ -1,9 +1,9 @@
 # flask_homework
 
-## Install Dependencies
+## Install Dependencies:
 
 $ pip install -r requirements.txt
 
-##Run_the app
+##Run the app:
 $ export FLASK_APP=app.py
 $ flask run
