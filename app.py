@@ -1,36 +1,91 @@
-from flask import Flask,request, render_template, redirect, make_response, url_for
+import uuid
+import os
+
+from flask import Flask,request, render_template, redirect, make_response, url_for, session, flash, make_response
+from flask_login import login_user, login_required, current_user, logout_user
+from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
+
+
+login_manager = LoginManager()
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.filter_by(login_id=user_id).first()
+
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    return redirect(url_for('login'))
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.secret_key = "Thisissecret"
 db = SQLAlchemy(app)
 
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
+login_manager.init_app(app)
+
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
+    login_id = db.Column(db.String(36), nullable=True)
+    
+    @property
+    def is_authenticated(self):
+        return True
 
-    def __repr__(self):
-        return '<User %r>' % self.username
+    @property
+    def is_active(self):
+        return True
+
+    def get_id(self):
+        return self.login_id
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        User(username = username, password = password)
-        print(username)
+        confirm_pasword = request.form["verify_password"]
+        if confirm_pasword == password:
+            user = User(username=username, password=generate_password_hash(password))
+            db.session.add(user)
+            db.session.commit()
+            flash("Registration complete!","success")
+            return redirect(url_for('login'))
+        else:
+            flash("Passwords doesn`t match!","danger")
     return render_template("register.html")
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     response = None
     if request.method == 'GET':
-        response = make_response(render_template('login.html'))
+        response = make_response(render_template("login.html"))
+    else:
+        response = make_response(redirect(url_for('profile')))
+
+        user = User.query.filter_by(username=request.form['username']).first()
+        if user and check_password_hash(user.password, request.form['password']):
+            user.login_id = str(uuid.uuid4())
+            db.session.commit()
+            login_user(user)
     return response
 
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    return render_template("profile.html")
+
 @app.route('/')
-def hello_world():
+def index():
     return render_template("index.html")
