@@ -71,14 +71,26 @@ def login():
     if request.method == 'GET':
         response = make_response(render_template("login.html"))
     else:
-        response = make_response(redirect(url_for('profile')))
 
         user = User.query.filter_by(username=request.form['username']).first()
         if user and check_password_hash(user.password, request.form['password']):
+            response = make_response(redirect(url_for('profile')))
+            flash("You are logeed in!","success")
             user.login_id = str(uuid.uuid4())
             db.session.commit()
             login_user(user)
+        else:
+            response = make_response(redirect(url_for('login')))
+            flash("Wrong username or password!","danger")
     return response
+
+@app.route("/logout")
+@login_required
+def logout():
+    current_user.login_id = None
+    db.session.commit()
+    logout_user()
+    return redirect(url_for('login'))
 
 
 @app.route('/profile', methods=['GET', 'POST'])
