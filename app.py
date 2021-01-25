@@ -47,6 +47,17 @@ class User(db.Model):
     def get_id(self):
         return self.login_id
 
+class Topic(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+
+
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
+    content = db.Column(db.String(10000), nullable=False)
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -54,6 +65,10 @@ def register():
         username = request.form["username"]
         password = request.form["password"]
         confirm_pasword = request.form["verify_password"]
+        user = User.query.filter_by(username=username).first()
+        if(user is not None):
+            flash("This username already exists!","danger")
+            return render_template("register.html")
         if confirm_pasword == password:
             user = User(username=username, password=generate_password_hash(password))
             db.session.add(user)
