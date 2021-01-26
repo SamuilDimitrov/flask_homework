@@ -6,6 +6,7 @@ from flask_login import login_user, login_required, current_user, logout_user
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 
 login_manager = LoginManager()
@@ -57,6 +58,7 @@ class Post(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
     content = db.Column(db.String(10000), nullable=False)
+    date_created = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -79,7 +81,6 @@ def register():
             flash("Passwords doesn`t match!","danger")
     return render_template("register.html")
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     response = None
@@ -90,7 +91,7 @@ def login():
         user = User.query.filter_by(username=request.form['username']).first()
         if user and check_password_hash(user.password, request.form['password']):
             response = make_response(redirect(url_for('profile')))
-            flash("You are logeed in!","success")
+            flash("You are logged in!","success")
             user.login_id = str(uuid.uuid4())
             db.session.commit()
             login_user(user)
@@ -98,6 +99,22 @@ def login():
             response = make_response(redirect(url_for('login')))
             flash("Wrong username or password!","danger")
     return response
+
+@app.route('/create_post', methods=['GET', 'POST'])
+def create_post():
+    if request.method == 'POST':
+        content = request.form["content"]
+        if len(content) > 0:
+            if current_user.is_authenticated:
+                post = Post(content = content)
+                db.session.add(post)
+                db.session.commit()
+            else:
+                flash("You are not logged in")
+        else:
+            flash("Add content")
+    return render_template("create_post.html")
+            
 
 @app.route("/logout")
 @login_required
