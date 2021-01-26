@@ -82,7 +82,6 @@ def register():
             flash("Passwords doesn`t match!","danger")
     return render_template("register.html")
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     response = None
@@ -93,7 +92,7 @@ def login():
         user = User.query.filter_by(username=request.form['username']).first()
         if user and check_password_hash(user.password, request.form['password']):
             response = make_response(redirect(url_for('profile')))
-            flash("You are logeed in!","success")
+            flash("You are logged in!","success")
             user.login_id = str(uuid.uuid4())
             db.session.commit()
             login_user(user)
@@ -121,6 +120,21 @@ def create_topic():
             flash("Topic added successfully!","success")
             return redirect(url_for('index'))
     return render_template("create_topic.html")
+
+@app.route('/create_post', methods=['GET', 'POST'])
+def create_post():
+    if request.method == 'POST':
+        content = request.form["content"]
+        if len(content) > 0:
+            if current_user.is_authenticated:
+                post = Post(content = content)
+                db.session.add(post)
+                db.session.commit()
+            else:
+                flash("You are not logged in")
+        else:
+            flash("Add content")
+    return render_template("create_post.html")
 
 @app.route('/logout')
 @login_required
