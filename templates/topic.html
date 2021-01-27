@@ -8,28 +8,38 @@ Topic
 <div class="row justify-content-center">
     <div class="col-md-4">
         <h1>{{topic.name}}</h1>
-        {% if not posts %}
-        <h3>There are no posts in this topic</h3>
+        {% if not entries %}
+        <h3>There are no entries in this topic</h3>
         {% else %}
         <div>
             <ul class="list-group">
-                {% for post in posts %}
+                {% for entry in entries %}
                 <li class="list-group-item">
-                    <p style="font-size: 1.5rem">
-                        {{post.content}}
-                    </p>
-                    {% if current_user.is_authenticated %}
-                    {% if current_user.id == post.user_id %}
-                    <div class="d-flex flex-row-reverse">
-                        <a href="/delete/{{post.id}}">
-                            <i class="bi bi-trash p-2 bd-highlight" style="font-size: 2rem"></i>
-                        </a>
-                        <a href="/change/{{post.id}}">
-                            <i class="bi bi-pencil p-2 bd-highlight" style="font-size: 2rem"></i>
-                        </a>
+                    <div style="display:flex;flex-flow:row nowrap;justify-content: space-between;">
+                        <div>
+                            {{entry.user.username}}
+                            {% if current_user.is_authenticated %}
+                            {% if current_user.id == entry.post.user_id %}
+                            <div class="d-flex flex-row">
+                                <a href="/delete/{{entry.post.id}}">
+                                    <i class="bi bi-trash p-2 bd-highlight" style="font-size: 1.5rem"></i>
+                                </a>
+                                <a href="/change/{{entry.post.id}}">
+                                    <i class="bi bi-pencil p-2 bd-highlight" style="font-size: 1.5rem"></i>
+                                </a>
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div style="font-size: 1.2rem;color:gray">
+                                {{entry.post.date_created.strftime('%Y-%m-%d %H:%M')}}
+                            </div>
+                        </div>
                     </div>
-                    {% endif %}
-                    {% endif %}
+                    <p style="font-size: 1.5rem">
+                        {{entry.post.content}}
+                    </p>
                 </li>
                 {% endfor %}
             </ul>
