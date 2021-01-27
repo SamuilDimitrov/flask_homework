@@ -16,15 +16,10 @@ Topic
                         {% if current_user.is_authenticated %}
                             {% if current_user.id == post.user_id %}
                                 <a href="/delete/{{post.id}}">
-                                    <span class="glyphicon glyphicon-trash"></span>
+                                    <i class="bi bi-trash"></i>
                                 </a>
-                            {% endif %}
-                        {% endif %}
-
-                        {% if current_user.is_authenticated %}
-                            {% if current_user.id == post.user_id %}
                                 <a href="/change/{{post.id}}">
-                                    <span class="glyphicon glyphicon-pencil"> </span>
+                                    <i class="bi bi-pencil"></i>
                                 </a>
                             {% endif %}
                         {% endif %}

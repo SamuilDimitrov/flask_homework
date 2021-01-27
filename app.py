@@ -133,11 +133,11 @@ def delete(id):
 @app.route('/change/<int:id>',methods=['GET', 'POST'])
 @login_required
 def change(id):
-    post_to_change = Post.query.get_or_404(id)
+    post_to_change = Post.query.filter_by(id = id).first()
 
     if request.method == 'POST':
         post_to_change.content = request.form['Change_content']
-        db.session.commit()
+        db_session.commit()
         return redirect("/topic/"+str(post_to_change.topic_id))
     return render_template('change.html', post = post_to_change)
 
