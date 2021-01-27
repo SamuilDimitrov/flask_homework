@@ -156,11 +156,23 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/delete/<int:id>')
+@login_required
 def delete(id):
     post_to_delete = Post.query.get_or_404(id)
     db.session.delete(post_to_delete)
     db.session.commit()
     return redirect(url_for('index'))
+
+@app.route('/change/<int:id>',methods=['GET', 'POST'])
+@login_required
+def change(id):
+    post_to_change = Post.query.get_or_404(id)
+
+    if request.method == 'POST':
+        post_to_change.content = request.form['Change_content']
+        db.session.commit()
+        return redirect("/topic/"+str(post_to_change.topic_id))
+    return render_template('change.html', post = post_to_change)
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
