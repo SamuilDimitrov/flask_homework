@@ -33,6 +33,8 @@ login_manager.init_app(app)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
@@ -53,22 +55,22 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    response = None
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
     if request.method == 'GET':
-        response = make_response(render_template("login.html"))
+        return render_template("login.html")
     else:
 
         user = User.query.filter_by(username=request.form['username']).first()
         if user and check_password_hash(user.password, request.form['password']):
-            response = make_response(redirect(url_for('profile')))
             flash("You are logged in!","success")
             user.login_id = str(uuid.uuid4())
             db_session.commit()
             login_user(user)
+            return redirect(url_for('index'))
         else:
-            response = make_response(redirect(url_for('login')))
             flash("Wrong username or password!","danger")
-    return response
+            return redirect(url_for('login'))
 
 @app.route('/create_topic', methods=['GET', 'POST'])
 @login_required
@@ -126,14 +128,19 @@ def logout():
 @login_required
 def delete(id):
     post_to_delete = Post.query.filter_by(id = id).first()
+    if current_user.id != post_to_delete.user_id:
+        return render_template('change.html', post = post_to_delete)
+
     db_session.delete(post_to_delete)
     db_session.commit()
-    return redirect(url_for('index'))
+    return redirect("/topic/"+str(post_to_delete.topic_id))
 
 @app.route('/change/<int:id>',methods=['GET', 'POST'])
 @login_required
 def change(id):
     post_to_change = Post.query.filter_by(id = id).first()
+    if current_user.id != post_to_change.user_id:
+        return render_template('change.html', post = post_to_change)
 
     if request.method == 'POST':
         post_to_change.content = request.form['Change_content']
