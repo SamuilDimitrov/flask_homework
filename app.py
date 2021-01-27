@@ -4,11 +4,12 @@ import os
 from flask import Flask,request, render_template, redirect, make_response, url_for, session, flash, make_response
 from flask_login import login_user, login_required, current_user, logout_user
 from flask_login import LoginManager
-from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
 from sqlalchemy import desc
 
+
+from database import db_session, init_db
+from models import User, Topic, Post
 
 login_manager = LoginManager()
 
@@ -23,45 +24,11 @@ def unauthorized():
     return redirect(url_for('login'))
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = "Thisissecret"
-db = SQLAlchemy(app)
 
+
+init_db()
 login_manager.init_app(app)
-
-
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
-    login_id = db.Column(db.String(36), nullable=True)
-    
-    @property
-    def is_authenticated(self):
-        return True
-
-    @property
-    def is_active(self):
-        return True
-
-    def get_id(self):
-        return self.login_id
-
-class Topic(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), unique=True, nullable=False)
-    description = db.Column(db.String(1000), unique=True, nullable=False)
-
-
-class Post(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
-    content = db.Column(db.String(10000), nullable=False)
-    date_created = db.Column(db.DateTime, default=datetime.utcnow)
-
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -76,8 +43,8 @@ def register():
             return render_template("register.html")
         if confirm_pasword == password:
             user = User(username=username, password=generate_password_hash(password))
-            db.session.add(user)
-            db.session.commit()
+            db_session.add(user)
+            db_session.commit()
             flash("Registration complete!","success")
             return redirect(url_for('login'))
         else:
@@ -96,7 +63,7 @@ def login():
             response = make_response(redirect(url_for('profile')))
             flash("You are logged in!","success")
             user.login_id = str(uuid.uuid4())
-            db.session.commit()
+            db_session.commit()
             login_user(user)
         else:
             response = make_response(redirect(url_for('login')))
@@ -117,8 +84,8 @@ def create_topic():
             return render_template("create_topic.html")
         else:
             topic = Topic(name=name, description = description)
-            db.session.add(topic)
-            db.session.commit()
+            db_session.add(topic)
+            db_session.commit()
             flash("Topic added successfully!","success")
             return redirect(url_for('index'))
     return render_template("create_topic.html")
@@ -139,8 +106,8 @@ def create_post(topic_id):
         if len(content) > 0:
             print(current_user.id)
             post = Post(content = content,topic_id = topic_id,user_id = current_user.id)
-            db.session.add(post)
-            db.session.commit()
+            db_session.add(post)
+            db_session.commit()
             flash("Post added successfully!","success")
             return redirect("/topic/"+str(topic_id))
         else:
@@ -151,15 +118,16 @@ def create_post(topic_id):
 @login_required
 def logout():
     current_user.login_id = None
-    db.session.commit()
+    db_session.commit()
     logout_user()
     return redirect(url_for('login'))
 
 @app.route('/delete/<int:id>')
+@login_required
 def delete(id):
-    post_to_delete = Post.query.get_or_404(id)
-    db.session.delete(post_to_delete)
-    db.session.commit()
+    post_to_delete = Post.query.filter_by(id = id).first()
+    db_session.delete(post_to_delete)
+    db_session.commit()
     return redirect(url_for('index'))
 
 @app.route('/profile', methods=['GET', 'POST'])
