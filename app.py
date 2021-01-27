@@ -137,7 +137,8 @@ def create_post(topic_id):
         content = request.form["content"]
         
         if len(content) > 0:
-            post = Post(content = content,topic_id = topic_id,user_id = current_user.get_id())
+            print(current_user.id)
+            post = Post(content = content,topic_id = topic_id,user_id = current_user.id)
             db.session.add(post)
             db.session.commit()
             flash("Post added successfully!","success")
@@ -154,6 +155,12 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+@app.route('/delete/<int:id>')
+def delete(id):
+    post_to_delete = Post.query.get_or_404(id)
+    db.session.delete(post_to_delete)
+    db.session.commit()
+    return redirect(url_for('index'))
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
