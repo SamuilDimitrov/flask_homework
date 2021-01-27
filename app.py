@@ -7,6 +7,7 @@ from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from sqlalchemy import desc
 
 
 login_manager = LoginManager()
@@ -60,6 +61,7 @@ class Post(db.Model):
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
     content = db.Column(db.String(10000), nullable=False)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
+
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -121,20 +123,28 @@ def create_topic():
             return redirect(url_for('index'))
     return render_template("create_topic.html")
 
-@app.route('/create_post', methods=['GET', 'POST'])
-def create_post():
+@app.route('/topic/<int:topic_id>')
+def show_topic(topic_id):
+    topic = Topic.query.filter_by(id=topic_id).first()
+    posts = Post.query.filter_by(topic_id=topic_id).order_by(desc(Post.id))
+    return render_template("topic.html",topic = topic,posts = posts)
+
+@app.route('/create_post/<int:topic_id>', methods=['GET', 'POST'])
+@login_required
+def create_post(topic_id):
+    topic = Topic.query.filter_by(id=topic_id).first()
     if request.method == 'POST':
         content = request.form["content"]
+        
         if len(content) > 0:
-            if current_user.is_authenticated:
-                post = Post(content = content)
-                db.session.add(post)
-                db.session.commit()
-            else:
-                flash("You are not logged in")
+            post = Post(content = content,topic_id = topic_id,user_id = current_user.get_id())
+            db.session.add(post)
+            db.session.commit()
+            flash("Post added successfully!","success")
+            return redirect("/topic/"+str(topic_id))
         else:
             flash("Add content")
-    return render_template("create_post.html")
+    return render_template("create_post.html",topic = topic)
 
 @app.route('/logout')
 @login_required
@@ -154,5 +164,5 @@ def profile():
 def index():
     if request.method == "POST":
         return redirect(url_for('create_topic'))
-    topics = Topic.query.order_by(Topic.id).all()
+    topics = Topic.query.order_by(desc(Topic.id)).all()
     return render_template("index.html",topics = topics)

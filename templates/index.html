@@ -8,16 +8,16 @@ Home
 
 <div class="row justify-content-center">
     <div class="col-md-4">
-    <ul class="list-group">
-        {% for topic in topics %}
-            <li class="list-group-item">
-                <h4>
-                    <a href="#">{{topic.name}}</a>
-                </h4>
-                <h6>
-                    {{topic.description}}
-                </h6>
-            </li>
+        <ul class="list-group">
+            {% for topic in topics %}
+                <li class="list-group-item">
+                    <h4>
+                        <a href="/topic/{{topic.id}}">{{topic.name}}</a>
+                    </h4>
+                    <h6>
+                        {{topic.description}}
+                    </h6>
+                </li>
             {% endfor %}
         </ul>
     </div>
