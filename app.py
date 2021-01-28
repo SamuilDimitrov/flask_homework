@@ -132,8 +132,7 @@ def logout():
 def delete(id):
     post_to_delete = Post.query.filter_by(id = id).first()
     if current_user.id != post_to_delete.user_id:
-        return render_template('change.html', post = post_to_delete)
-
+        return redirect("/topic/"+str(post_to_delete.topic_id))
     db_session.delete(post_to_delete)
     db_session.commit()
     return redirect("/topic/"+str(post_to_delete.topic_id))
@@ -144,7 +143,6 @@ def change(id):
     post_to_change = Post.query.filter_by(id = id).first()
     if current_user.id != post_to_change.user_id:
         return render_template('change.html', post = post_to_change)
-
     if request.method == 'POST':
         post_to_change.content = request.form['Change_content']
         db_session.commit()
