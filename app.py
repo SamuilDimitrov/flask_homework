@@ -1,7 +1,7 @@
 import uuid
 import os
 
-from flask import Flask,request, render_template, redirect, make_response, url_for, session, flash, make_response
+from flask import Flask, request, render_template, redirect, make_response, url_for, session, flash, make_response
 from flask_login import login_user, login_required, current_user, logout_user
 from flask_login import LoginManager
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -14,6 +14,13 @@ from models import User, Topic, Post
 login_manager = LoginManager()
 
 
+app = Flask(__name__)
+app.secret_key = "Thisissecret"
+
+
+init_db()
+login_manager.init_app(app)
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.filter_by(login_id=user_id).first()
@@ -22,13 +29,6 @@ def load_user(user_id):
 @login_manager.unauthorized_handler
 def unauthorized():
     return redirect(url_for('login'))
-
-app = Flask(__name__)
-app.secret_key = "Thisissecret"
-
-
-init_db()
-login_manager.init_app(app)
 
 
 @app.route('/register', methods=['GET', 'POST'])
