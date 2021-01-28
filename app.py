@@ -96,7 +96,11 @@ def create_topic():
 def show_topic(topic_id):
     topic = Topic.query.filter_by(id=topic_id).first()
     posts = Post.query.filter_by(topic_id=topic_id).order_by(desc(Post.id))
-    return render_template("topic.html",topic = topic,posts = posts)
+    entries = []
+    for post in posts:
+        entry = lambda: None; entry.post = post; entry.user = User.query.filter_by(id=post.user_id).first()
+        entries.append(entry)
+    return render_template("topic.html",topic = topic,posts = posts,entries = entries)
 
 @app.route('/create_post/<int:topic_id>', methods=['GET', 'POST'])
 @login_required
@@ -104,7 +108,6 @@ def create_post(topic_id):
     topic = Topic.query.filter_by(id=topic_id).first()
     if request.method == 'POST':
         content = request.form["content"]
-        
         if len(content) > 0:
             print(current_user.id)
             post = Post(content = content,topic_id = topic_id,user_id = current_user.id)
