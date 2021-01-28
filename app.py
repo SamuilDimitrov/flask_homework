@@ -5,7 +5,7 @@ from flask import Flask, request, render_template, redirect, make_response, url_
 from flask_login import login_user, login_required, current_user, logout_user
 from flask_login import LoginManager
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import desc
+from sqlalchemy import asc
 
 
 from database import db_session, init_db
@@ -95,7 +95,7 @@ def create_topic():
 @app.route('/topic/<int:topic_id>')
 def show_topic(topic_id):
     topic = Topic.query.filter_by(id=topic_id).first()
-    posts = Post.query.filter_by(topic_id=topic_id).order_by(desc(Post.id))
+    posts = Post.query.filter_by(topic_id=topic_id).order_by(asc(Post.id))
     entries = []
     for post in posts:
         entry = lambda: None; entry.post = post; entry.user = User.query.filter_by(id=post.user_id).first()
@@ -160,5 +160,5 @@ def profile():
 def index():
     if request.method == "POST":
         return redirect(url_for('create_topic'))
-    topics = Topic.query.order_by(desc(Topic.id)).all()
+    topics = Topic.query.order_by(asc(Topic.id)).all()
     return render_template("index.html",topics = topics)
