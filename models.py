@@ -37,4 +37,4 @@ class Post(Base):
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     topic_id = Column(Integer, ForeignKey('topic.id'), nullable=False)
     content = Column(String(10000), nullable=False)
-    date_created = Column(DateTime, default=datetime.utcnow)
+    date_created = Column(DateTime, default=datetime.now)
